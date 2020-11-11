@@ -6,8 +6,12 @@ import requests
 import lxml.html as parser
 
 class ArticleSpider(scrapy.Spider):
-    name = "medium"
-
+    name = "medium_basic"
+    custom_settings = {
+        'AUTOTHROTTLE_ENABLED': True,
+        'AUTOTHROTTLE_DEBUG': True,
+        'DOWNLOAD_DELAY': 1,
+    }
     def start_requests(self):
         urls = [
             'https://medium.com/python-in-plain-english/archive',
@@ -30,13 +34,15 @@ class ArticleSpider(scrapy.Spider):
         year_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]/*/a/@href').getall()
         if len(year_pages) != 0:
             yield from response.follow_all(year_pages, callback=self.parse_months)
+        else:
+            yield from self.parse_articles(response)
     
     def parse_months(self, response):
         month_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[3]/div/a/@href').getall()
         if len(month_pages) != 0:
             yield from response.follow_all(month_pages, callback=self.parse_days)
         else:
-            self.parse_articles(response)
+            yield from self.parse_articles(response)
 
     def parse_days(self, response):
         day_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[4]/div/a/@href').getall()
