@@ -1,22 +1,21 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
+from datetime import datetime
 
-import datetime
-import requests
-import lxml.html as parser
 
 class ArticleSpider(scrapy.Spider):
     name = "medium_basic"
     custom_settings = {
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_DEBUG': True,
-        'DOWNLOAD_DELAY': 1,
+        'DOWNLOAD_DELAY': 5,
+        'ROBOTSTXT_OBEY': False,
     }
     def start_requests(self):
         urls = [
-            'https://medium.com/python-in-plain-english/archive',
-            #'https://medium.com/iearn/archive',
-            #'https://towardsdatascience.com/archive',
+            # 'https://towardsdatascience.com/archive'
+            #'https://medium.com/python-in-plain-english/archive',
+            'https://medium.com/iearn/archive',
         ]
         #year_element = #/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]
         #month_element = #/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[3]
@@ -54,31 +53,45 @@ class ArticleSpider(scrapy.Spider):
         if len(articles) != 0:
             for article in articles:
                 author = article.xpath('.//a[@data-action="show-user-card"]/text()').get()
-                published_date = article.xpath('.//time/text()').get()
-                min_read = article.xpath('.//*[@class="readingTime"]/@title')[0].get()
+                
+                str_read_time = article.xpath('.//*[@class="readingTime"]/@title')[0].get()
+                int_read_time = str_read_time.split()[0]
+
                 collection = article.xpath('.//a[@data-action="show-collection-card"]/text()').get()
                 title = article.xpath('.//h3[contains(@class, "title")]/text()').get()
-                try:
-                    claps = article.xpath('.//button[@data-action="show-recommends"]/text()').get()
-                except:
+                
+                claps = article.xpath('.//button[@data-action="show-recommends"]/text()').get()
+                if claps == None:
                     claps = 0
-                try:
-                    responses = article.xpath('.//a[@class="button button--chromeless u-baseColor--buttonNormal"]/text()').get()
-                except:
+                responses = article.xpath('.//a[@class="button button--chromeless u-baseColor--buttonNormal"]/text()').get()
+                if responses == None:
                     responses = 0
+                subtitle_preview = article.xpath('.//h4[@name="previewSubtitle"]/text()').get()
+                
+                published_date = article.xpath('.//time/text()').get()
                 try:
-                    subtitle_preview = article.xpath('.//h4[@name="previewSubtitle"]/text()').get()
+                    date_object = datetime.strptime(published_date, "%b %d, %Y")
+                    day = date_object.day
+                    month = date_object.month
+                    year = date_object.year
                 except:
-                    subtitle_preview = None
+                    date_object = datetime.strptime(published_date, "%b %d")
+                    day = date_object.day
+                    month = date_object.month
+                    year = datetime.now().year
+
                 yield {
                     'author' : author,
                     'title' : title,
                     'subtitle preview' : subtitle_preview,
-                    'published date' : published_date,
-                    'min read time' : min_read,
                     'collection' : collection,
+                    'read time' : int_read_time,
                     'claps' : claps,
-                    'responses' : responses
+                    'responses' : responses,
+                    'published date' : published_date,
+                    'day' : day,
+                    'month' : month,
+                    'year' : year
                 }
 
 
@@ -93,3 +106,9 @@ class ArticleSpider(scrapy.Spider):
 # parser = parser.fromstring(response.text)
 
 #parser.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]/*/a/@href')
+
+
+# pre solution for year:
+# year_div = response.xpath("/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]")
+# year_num = len(year_div.xpath(".//a"))
+# where year_num is the number of links to different years
