@@ -1,7 +1,7 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
 from datetime import datetime
-
+from decimal import Decimal
 
 class ArticleSpider(scrapy.Spider):
     name = "medium_basic"
@@ -10,6 +10,7 @@ class ArticleSpider(scrapy.Spider):
         'AUTOTHROTTLE_DEBUG': True,
         'DOWNLOAD_DELAY': 5,
         'ROBOTSTXT_OBEY': False,
+        'DUPEFILTER_CLASS': 'scrapy.dupefilters.BaseDupeFilter',
     }
     def start_requests(self):
         urls = [
@@ -17,36 +18,33 @@ class ArticleSpider(scrapy.Spider):
             #'https://medium.com/python-in-plain-english/archive',
             'https://medium.com/iearn/archive',
         ]
-        #year_element = #/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]
-        #month_element = #/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[3]
-        #day_element = #/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[4]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        # page = response.url.split("/")[-2]
-        # filename = f'quotes-{page}.html'
-        # with open(filename, 'wb') as f:
-        #     f.write(response.body)
-        # self.log(f'Saved file {filename}')
-
-        year_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]/*/a/@href').getall()
+        
+        year_div = response.xpath("/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]")
+        year_pages = year_div.xpath(".//a/@href").getall()
         if len(year_pages) != 0:
             yield from response.follow_all(year_pages, callback=self.parse_months)
         else:
             yield from self.parse_articles(response)
     
     def parse_months(self, response):
-        month_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[3]/div/a/@href').getall()
+        month_div = response.xpath("/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[3]")
+        month_pages = month_div.xpath(".//a/@href").getall()
         if len(month_pages) != 0:
             yield from response.follow_all(month_pages, callback=self.parse_days)
         else:
             yield from self.parse_articles(response)
 
     def parse_days(self, response):
-        day_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[4]/div/a/@href').getall()
+        day_div = response.xpath("/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[4]")        
+        day_pages = day_div.xpath(".//a/@href").getall()
         if len(day_pages) != 0:
             yield from response.follow_all(day_pages, callback=self.parse_articles)
+        else:
+            yield from self.parse_articles(response)
     
     def parse_articles(self, response):
         articles = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[2]/*')
@@ -63,9 +61,17 @@ class ArticleSpider(scrapy.Spider):
                 claps = article.xpath('.//button[@data-action="show-recommends"]/text()').get()
                 if claps == None:
                     claps = 0
+                else:
+                    claps = claps.split()[0]
+                if type(claps) == str:
+                    claps = text_to_num(claps)
+
                 responses = article.xpath('.//a[@class="button button--chromeless u-baseColor--buttonNormal"]/text()').get()
                 if responses == None:
                     responses = 0
+                else:
+                    responses = responses.split()[0]
+                
                 subtitle_preview = article.xpath('.//h4[@name="previewSubtitle"]/text()').get()
                 
                 published_date = article.xpath('.//time/text()').get()
@@ -95,20 +101,11 @@ class ArticleSpider(scrapy.Spider):
                 }
 
 
-# process = CrawlerProcess()
-# process.crawl(ArticleSpider)
-# process.start()
+def text_to_num(text):
+    d = {'K': 3}
+    if text[-1] in d:
+        num, magnitude = text[:-1], text[-1]
+        return int(Decimal(num) * 10 ** d[magnitude])
+    else:
+        return int(Decimal(text))
 
-
-
-# url = "https://towardsdatascience.com/archive"
-# response = requests.get(url, verify = False)
-# parser = parser.fromstring(response.text)
-
-#parser.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]/*/a/@href')
-
-
-# pre solution for year:
-# year_div = response.xpath("/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]")
-# year_num = len(year_div.xpath(".//a"))
-# where year_num is the number of links to different years
