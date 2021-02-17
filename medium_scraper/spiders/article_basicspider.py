@@ -56,20 +56,17 @@ class ArticleSpider(scrapy.Spider):
                 int_read_time = str_read_time.split()[0]
 
                 collection = article.xpath('.//a[@data-action="show-collection-card"]/text()').get()
+                
                 title = article.xpath('.//h3[contains(@class, "title")]/text()').get()
                 
                 claps = article.xpath('.//button[@data-action="show-recommends"]/text()').get()
-                if claps == None:
-                    claps = 0
-                else:
-                    claps = claps.split()[0]
-                if type(claps) == str:
-                    claps = text_to_num(claps)
+                if claps != None:
+                    claps = claps.split()[0]               
+                    if type(claps) == str:
+                        claps = text_to_num(claps)
 
                 responses = article.xpath('.//a[@class="button button--chromeless u-baseColor--buttonNormal"]/text()').get()
-                if responses == None:
-                    responses = 0
-                else:
+                if responses != None:
                     responses = responses.split()[0]
                 
                 subtitle_preview = article.xpath('.//h4[@name="previewSubtitle"]/text()').get()
@@ -92,7 +89,6 @@ class ArticleSpider(scrapy.Spider):
                     'read time' : int_read_time,
                     'claps' : claps,
                     'responses' : responses,
-                    # 'published date' : published_date,
                     'day' : day,
                     'month' : month,
                     'year' : year

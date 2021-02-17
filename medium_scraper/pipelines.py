@@ -5,7 +5,7 @@
 
 
 # useful for handling different item types with a single interface
-from itemadapter import ItemAdapter
+# from itemadapter import ItemAdapter
 
 # 1.1
 from scrapy import signals
@@ -14,16 +14,35 @@ from scrapy.exporters import CsvItemExporter
 # 1.2
 from models import MediumDbModel, create_table, db_connect
 from sqlalchemy.orm import sessionmaker
-
-# class MediumScraperPipeline:
-#     def process_item(self, item, spider):
-#         return item
-
+from scrapy.exceptions import DropItem
 
 
 # ################################################################
 # ######################  Spider 1.2   ###########################
 # ################################################################
+
+class AvoidDuplicatesPipeline(object):
+    def __init__(self):
+        """
+        Initializes database connection and sessionmaker
+        Creates tables
+        """
+        engine = db_connect()
+        create_table(engine)
+        self.factory = sessionmaker(bind=engine)
+
+    def process_item(self, item, spider):
+        session = self.factory()
+        exist_title = session.query(MediumDbModel).filter_by(title=item["title"]).first()
+        if (exist_title is not None):
+            # global redundancy, redundancy_streak
+            # settings.redundancy = settings.redundancy + 1
+            # settings.redundancy_streak = settings.redundancy_streak + 1
+            raise DropItem("Duplicate item found: {}".format(item["title"]))
+            session.close()
+        else:
+            return item
+            session.close()
 
 
 class SQLiteWriterPipeline(object):
@@ -50,7 +69,6 @@ class SQLiteWriterPipeline(object):
         catalog.read_time = item["read_time"]
         catalog.claps = item["claps"]
         catalog.responses = item["responses"]
-        # catalog.published_date = item["published_date"]
         catalog.day = item["day"]
         catalog.month = item["month"]
         catalog.year = item["year"]
@@ -106,7 +124,6 @@ class DefaultValuesPipeline(object):
         item.setdefault('read_time', None)
         item.setdefault('claps', None)
         item.setdefault('responses', None)
-        # item.setdefault('published_date', None)
         item.setdefault('day', None)
         item.setdefault('month', None)
         item.setdefault('year', None)
