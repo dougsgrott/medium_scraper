@@ -2,6 +2,7 @@ import scrapy
 from scrapy.crawler import CrawlerProcess
 from datetime import datetime
 from decimal import Decimal
+from scrapy.utils.project import get_project_settings
 
 class ArticleSpider(scrapy.Spider):
     name = "medium_basic"
@@ -22,7 +23,6 @@ class ArticleSpider(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        
         year_div = response.xpath("/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]")
         year_pages = year_div.xpath(".//a/@href").getall()
         if len(year_pages) != 0:
@@ -77,14 +77,12 @@ class ArticleSpider(scrapy.Spider):
                 published_date = article.xpath('.//time/text()').get()
                 try:
                     date_object = datetime.strptime(published_date, "%b %d, %Y")
-                    day = date_object.day
-                    month = date_object.month
                     year = date_object.year
                 except:
                     date_object = datetime.strptime(published_date, "%b %d")
-                    day = date_object.day
-                    month = date_object.month
                     year = datetime.now().year
+                day = date_object.day
+                month = date_object.month
 
                 yield {
                     'author' : author,
@@ -94,7 +92,7 @@ class ArticleSpider(scrapy.Spider):
                     'read time' : int_read_time,
                     'claps' : claps,
                     'responses' : responses,
-                    'published date' : published_date,
+                    # 'published date' : published_date,
                     'day' : day,
                     'month' : month,
                     'year' : year
@@ -109,3 +107,7 @@ def text_to_num(text):
     else:
         return int(Decimal(text))
 
+# if __name__ == '__main__':
+#     process = CrawlerProcess(get_project_settings())
+#     process.crawl(ArticleSpider)
+#     process.start()

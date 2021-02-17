@@ -12,6 +12,7 @@ BOT_NAME = 'medium_scraper'
 SPIDER_MODULES = ['medium_scraper.spiders']
 NEWSPIDER_MODULE = 'medium_scraper.spiders'
 
+CONNECTION_STRING = 'sqlite:////home/user/PythonProj/Scraping/medium_scraper/medium.db'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'medium_scraper (+http://www.yourdomain.com)'
