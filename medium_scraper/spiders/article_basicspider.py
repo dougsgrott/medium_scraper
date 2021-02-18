@@ -102,8 +102,3 @@ def text_to_num(text):
         return int(Decimal(num) * 10 ** d[magnitude])
     else:
         return int(Decimal(text))
-
-# if __name__ == '__main__':
-#     process = CrawlerProcess(get_project_settings())
-#     process.crawl(ArticleSpider)
-#     process.start()

@@ -5,10 +5,7 @@
 
 import scrapy
 
-# from real estate
-from itemloaders.processors import Compose, TakeFirst, Join, MapCompose
-import re
-from w3lib.html import remove_tags
+from itemloaders.processors import MapCompose
 
 from datetime import datetime
 from decimal import Decimal

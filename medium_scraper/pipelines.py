@@ -4,9 +4,6 @@
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 
-# useful for handling different item types with a single interface
-# from itemadapter import ItemAdapter
-
 # 1.1
 from scrapy import signals
 from scrapy.exporters import CsvItemExporter
@@ -35,9 +32,6 @@ class AvoidDuplicatesPipeline(object):
         session = self.factory()
         exist_title = session.query(MediumDbModel).filter_by(title=item["title"]).first()
         if (exist_title is not None):
-            # global redundancy, redundancy_streak
-            # settings.redundancy = settings.redundancy + 1
-            # settings.redundancy_streak = settings.redundancy_streak + 1
             raise DropItem("Duplicate item found: {}".format(item["title"]))
             session.close()
         else:
@@ -77,8 +71,6 @@ class SQLiteWriterPipeline(object):
             print('Entry added')
             session.add(catalog)
             session.commit()
-            # settings.saved = settings.saved + 1
-            # settings.redundancy_streak = 0
         except:
             print('rollback')
             session.rollback()
@@ -115,7 +107,6 @@ class CsvWriterPipeline(object):
 
 
 class DefaultValuesPipeline(object):
-
     def process_item(self, item, spider):
         item.setdefault('author', None)
         item.setdefault('title', None)
