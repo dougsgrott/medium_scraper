@@ -13,6 +13,23 @@ from scrapy.utils.project import get_project_settings
 import logging
 import pprint
 
+
+month_dict = {
+    'January': 1,
+    'February': 2,
+    'March': 3,
+    'April': 4,
+    'May': 5,
+    'June': 6,
+    'July': 7,
+    'August': 8,
+    'September': 9,
+    'October': 10,
+    'November': 11,
+    'December': 12
+}
+
+
 class ArticleSpider(Spider):
     name = "medium_continuity"
     custom_settings = {
@@ -39,6 +56,9 @@ class ArticleSpider(Spider):
     MOST_RECENT_YEAR = None
     MOST_RECENT_MONTH = None
     MOST_RECENT_DAY = None
+    year = None
+    month = None
+    day = None
 
     def start_requests(self):
         urls = [
@@ -75,35 +95,43 @@ class ArticleSpider(Spider):
 
     def parse(self, response):
         year_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]/*/a/@href').getall()
+        year_names = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]/*/a/text()').getall()
         year_selector = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]/*/a')
 
         if self.SCRAPING_MAINTENANCE:
             year_pages = [sel.xpath('./@href').get() for sel in year_selector if int(sel.xpath('./text()').get()) >= self.MOST_RECENT_YEAR ]
+            year_names = [sel.xpath('./text()').get() for sel in year_selector if int(sel.xpath('./text()').get()) >= self.MOST_RECENT_YEAR ]
 
         if len(year_pages) != 0:
-            yield from response.follow_all(year_pages, callback=self.parse_months)
+            for link, year in zip(year_pages, year_names):
+                self.year = year
+                yield response.follow(link, callback=self.parse_months)
+            # yield from response.follow_all(year_pages, callback=self.parse_months)
         else:
             yield from self.parse_articles(response)
-    
+
 
     def parse_months(self, response):
         month_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[3]/div/a/@href').getall()
-        # [sel.xpath('./text()').get() for sel in month_selector]
+        month_names = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[3]/div/a/text()').getall()
         month_selector = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[3]/*/a')
-        
-        # it's not feasible to do the same validation done in year parsing
-        # because month text() are strings (month names)
-        # TO DO: create a dict to "convert" string name to string number
-        # THEN validate numerically.
+
+        if self.SCRAPING_MAINTENANCE:
+            month_pages = [sel.xpath('./@href').get() for sel in month_selector if month_dict[sel.xpath('./text()').get()] >= self.MOST_RECENT_MONTH ]
+            month_names = [sel.xpath('./text()').get() for sel in month_selector if month_dict[sel.xpath('./text()').get()] >= self.MOST_RECENT_MONTH ]
 
         if len(month_pages) != 0:
-            yield from response.follow_all(month_pages, callback=self.parse_days)
+            for link, month in zip(month_pages, month_names):
+                self.month = month
+                yield response.follow(link, callback=self.parse_days)
+            # yield from response.follow_all(month_pages, callback=self.parse_days)
         else:
             yield from self.parse_articles(response)
     
 
     def parse_days(self, response):
         day_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[4]/div/a/@href').getall()
+        day_names = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[4]/div/a/text()').getall()
         day_selector = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[4]/*/a')
 
         if len(day_pages) != 0:
