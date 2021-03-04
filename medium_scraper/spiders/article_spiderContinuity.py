@@ -13,6 +13,8 @@ from scrapy.utils.project import get_project_settings
 import logging
 import pprint
 
+from models import MediumDbModel, create_table, db_connect
+from sqlalchemy.orm import sessionmaker
 
 month_dict = {
     'January': 1,
@@ -52,7 +54,7 @@ class ArticleSpider(Spider):
     file_handler.setFormatter(formatter)
     customLogger.addHandler(file_handler)
     
-    SCRAPING_MAINTENANCE = False
+    SCRAPING_MAINTENANCE = True
     MOST_RECENT_YEAR = None
     MOST_RECENT_MONTH = None
     MOST_RECENT_DAY = None
@@ -78,8 +80,21 @@ class ArticleSpider(Spider):
         return spider
 
 
+    def getMostRecentEntry(self):
+        engine = db_connect()
+        create_table(engine)
+        factory = sessionmaker(bind=engine)
+        session = factory()
+        qry = session.query(MediumDbModel).order_by(MediumDbModel.year.desc(), MediumDbModel.month.desc(), MediumDbModel.day.desc()).first()
+        self.MOST_RECENT_YEAR = qry.year
+        self.MOST_RECENT_MONTH = qry.month
+        self.MOST_RECENT_DAY = qry.day
+
+
     def handle_spider_opened(self):
         self.customLogger.info("Spider Opened")
+        if (self.SCRAPING_MAINTENANCE):
+            self.getMostRecentEntry()
 
 
     def handle_spider_closed(self, reason=""):
