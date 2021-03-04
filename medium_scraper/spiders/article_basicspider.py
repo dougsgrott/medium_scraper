@@ -80,18 +80,20 @@ class ArticleSpider(scrapy.Spider):
                     year = datetime.now().year
                 day = date_object.day
                 month = date_object.month
+                published_date = datetime(year, month, day)
+
+                scraped_date = datetime.now()
 
                 yield {
-                    'author' : author,
-                    'title' : title,
-                    'subtitle preview' : subtitle_preview,
-                    'collection' : collection,
-                    'read time' : int_read_time,
-                    'claps' : claps,
-                    'responses' : responses,
-                    'day' : day,
-                    'month' : month,
-                    'year' : year
+                    'author': author,
+                    'title': title,
+                    'subtitle preview': subtitle_preview,
+                    'collection': collection,
+                    'read time': int_read_time,
+                    'claps': claps,
+                    'responses': responses,
+                    'published_date': published_date,
+                    'scraped_date': scraped_date
                 }
 
 

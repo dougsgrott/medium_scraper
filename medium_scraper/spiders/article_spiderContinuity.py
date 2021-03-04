@@ -10,6 +10,7 @@ sys.path.append("/home/user/PythonProj/Scraping/medium_scraper/medium_scraper")
 from items import MediumScraperItem
 from scrapy.utils.project import get_project_settings
 
+from datetime import datetime
 import logging
 import pprint
 
@@ -85,10 +86,10 @@ class ArticleSpider(Spider):
         create_table(engine)
         factory = sessionmaker(bind=engine)
         session = factory()
-        qry = session.query(MediumDbModel).order_by(MediumDbModel.year.desc(), MediumDbModel.month.desc(), MediumDbModel.day.desc()).first()
-        self.MOST_RECENT_YEAR = qry.year
-        self.MOST_RECENT_MONTH = qry.month
-        self.MOST_RECENT_DAY = qry.day
+        qry = session.query(MediumDbModel).order_by(MediumDbModel.published_date.desc()).first()
+        self.MOST_RECENT_YEAR = qry.published_date.year
+        self.MOST_RECENT_MONTH = qry.published_date.month
+        self.MOST_RECENT_DAY = qry.published_date.day
 
 
     def handle_spider_opened(self):
@@ -121,7 +122,6 @@ class ArticleSpider(Spider):
             for link, year in zip(year_pages, year_names):
                 self.year = year
                 yield response.follow(link, callback=self.parse_months)
-            # yield from response.follow_all(year_pages, callback=self.parse_months)
         else:
             yield from self.parse_articles(response)
 
@@ -139,7 +139,6 @@ class ArticleSpider(Spider):
             for link, month in zip(month_pages, month_names):
                 self.month = month
                 yield response.follow(link, callback=self.parse_days)
-            # yield from response.follow_all(month_pages, callback=self.parse_days)
         else:
             yield from self.parse_articles(response)
     
@@ -171,9 +170,8 @@ class ArticleSpider(Spider):
         item_loader.add_xpath('read_time', './/*[@class="readingTime"]/@title')
         item_loader.add_xpath('claps', './/button[@data-action="show-recommends"]/text()')
         item_loader.add_xpath('responses', './/a[@class="button button--chromeless u-baseColor--buttonNormal"]/text()')
-        item_loader.add_xpath('day', './/time/text()')
-        item_loader.add_xpath('month', './/time/text()')
-        item_loader.add_xpath('year', './/time/text()')
+        item_loader.add_xpath('published_date', './/time/text()')
+        item_loader.add_value('scraped_date', datetime.now())
 
         return item_loader.load_item()
 

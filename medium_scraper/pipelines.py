@@ -63,9 +63,11 @@ class SQLiteWriterPipeline(object):
         catalog.read_time = item["read_time"]
         catalog.claps = item["claps"]
         catalog.responses = item["responses"]
-        catalog.day = item["day"]
-        catalog.month = item["month"]
-        catalog.year = item["year"]
+        # catalog.day = item["day"]
+        # catalog.month = item["month"]
+        # catalog.year = item["year"]
+        catalog.published_date = item['published_date']
+        catalog.scraped_date = item['scraped_date']
 
         try:
             print('Entry added')
@@ -115,8 +117,10 @@ class DefaultValuesPipeline(object):
         item.setdefault('read_time', None)
         item.setdefault('claps', None)
         item.setdefault('responses', None)
-        item.setdefault('day', None)
-        item.setdefault('month', None)
-        item.setdefault('year', None)
+        # item.setdefault('day', None)
+        # item.setdefault('month', None)
+        # item.setdefault('year', None)
+        item.setdefault('published_date', None)
+        item.setdefault('scraped_date', None)
  
         return item
