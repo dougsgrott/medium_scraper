@@ -1,26 +1,17 @@
 import scrapy
-from scrapy.crawler import CrawlerProcess
 from datetime import datetime
 from decimal import Decimal
-from scrapy.utils.project import get_project_settings
 
 class ArticleSpider(scrapy.Spider):
     name = "medium_basic"
+    start_urls = ['https://medium.com/iearn/archive']
     custom_settings = {
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_DEBUG': True,
-        'DOWNLOAD_DELAY': 5,
+        'DOWNLOAD_DELAY': 1,
         'ROBOTSTXT_OBEY': False,
         'DUPEFILTER_CLASS': 'scrapy.dupefilters.BaseDupeFilter',
     }
-    def start_requests(self):
-        urls = [
-            # 'https://towardsdatascience.com/archive'
-            #'https://medium.com/python-in-plain-english/archive',
-            'https://medium.com/iearn/archive',
-        ]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
         year_div = response.xpath("/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]")
@@ -82,6 +73,9 @@ class ArticleSpider(scrapy.Spider):
                 month = date_object.month
                 published_date = datetime(year, month, day)
 
+                article_url = article.xpath('.//a[contains(@class, "button--smaller")]/@href').get().split('?')[0]
+                article_url = article_url.split('?')[0]
+                
                 scraped_date = datetime.now()
 
                 yield {
@@ -93,6 +87,7 @@ class ArticleSpider(scrapy.Spider):
                     'claps': claps,
                     'responses': responses,
                     'published_date': published_date,
+                    'article_url' : article_url,
                     'scraped_date': scraped_date
                 }
 

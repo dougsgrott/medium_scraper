@@ -31,34 +31,6 @@ def getNumericResponse(text):
 def getNumericReadTime(text):
     return text.split()[0]
 
-
-# def getPublishedDay(published_date):
-#     try:
-#         date_object = datetime.strptime(published_date, "%b %d, %Y")
-#     except:
-#         date_object = datetime.strptime(published_date, "%b %d")
-#     day = date_object.day
-#     return day
-
-
-# def getPublishedMonth(published_date):
-#     try:
-#         date_object = datetime.strptime(published_date, "%b %d, %Y")
-#     except:
-#         date_object = datetime.strptime(published_date, "%b %d")
-#     month = date_object.month
-#     return month
-
-
-# def getPublishedYear(published_date):
-#     try:
-#         date_object = datetime.strptime(published_date, "%b %d, %Y")
-#         year = date_object.year
-#     except:
-#         date_object = datetime.strptime(published_date, "%b %d")
-#         year = datetime.now().year
-#     return year
-
 def getPublishedDate(published_date):
     try:
         date_object = datetime.strptime(published_date, "%b %d, %Y")
@@ -72,6 +44,10 @@ def getPublishedDate(published_date):
     return formatted_published_date
 
 
+def getArticleUrl(raw_url):
+    return raw_url.split('?')[0]
+
+
 class MediumScraperItem(scrapy.Item):
     author = scrapy.Field()
     title = scrapy.Field()
@@ -80,8 +56,6 @@ class MediumScraperItem(scrapy.Item):
     read_time = scrapy.Field(input_processor=MapCompose(getNumericReadTime))
     claps = scrapy.Field(input_processor=MapCompose(text_to_num))
     responses = scrapy.Field(input_processor=MapCompose(getNumericResponse))
-    # day = scrapy.Field(input_processor=MapCompose(getPublishedDay))
-    # month = scrapy.Field(input_processor=MapCompose(getPublishedMonth))
-    # year = scrapy.Field(input_processor=MapCompose(getPublishedYear))
     published_date = scrapy.Field(input_processor=MapCompose(getPublishedDate))
+    article_url = scrapy.Field(input_processor=MapCompose(getArticleUrl))
     scraped_date = scrapy.Field()
