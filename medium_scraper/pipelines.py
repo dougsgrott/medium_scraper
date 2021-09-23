@@ -4,19 +4,13 @@
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 
-# 1.1
 from scrapy import signals
 from scrapy.exporters import CsvItemExporter
 
-# 1.2
 from models import MediumDbModel, create_table, db_connect
 from sqlalchemy.orm import sessionmaker
 from scrapy.exceptions import DropItem
 
-
-# ################################################################
-# ######################  Spider 1.2   ###########################
-# ################################################################
 
 class AvoidDuplicatesPipeline(object):
     def __init__(self):
@@ -33,10 +27,8 @@ class AvoidDuplicatesPipeline(object):
         exist_title = session.query(MediumDbModel).filter_by(title=item["title"]).first()
         if (exist_title is not None):
             raise DropItem("Duplicate item found: {}".format(item["title"]))
-            session.close()
         else:
             return item
-            session.close()
 
 
 class SQLiteWriterPipeline(object):
@@ -63,10 +55,8 @@ class SQLiteWriterPipeline(object):
         catalog.read_time = item["read_time"]
         catalog.claps = item["claps"]
         catalog.responses = item["responses"]
-        # catalog.day = item["day"]
-        # catalog.month = item["month"]
-        # catalog.year = item["year"]
         catalog.published_date = item['published_date']
+        catalog.article_url = item['article_url']
         catalog.scraped_date = item['scraped_date']
 
         try:
@@ -82,9 +72,6 @@ class SQLiteWriterPipeline(object):
         
         return item
 
-# ################################################################
-# ######################  Spider 1.1   ###########################
-# ################################################################
 
 class CsvWriterPipeline(object):
     @classmethod
@@ -95,7 +82,7 @@ class CsvWriterPipeline(object):
         return pipeline
 
     def spider_opened(self, spider):
-        self.file = open('output.csv', 'w+b')
+        self.file = open('./medium_scraper/scraped_data/output2.csv', 'w+b')
         self.exporter = CsvItemExporter(self.file)
         self.exporter.start_exporting()
 
@@ -117,10 +104,8 @@ class DefaultValuesPipeline(object):
         item.setdefault('read_time', None)
         item.setdefault('claps', None)
         item.setdefault('responses', None)
-        # item.setdefault('day', None)
-        # item.setdefault('month', None)
-        # item.setdefault('year', None)
         item.setdefault('published_date', None)
+        item.setdefault('article_url', None)
         item.setdefault('scraped_date', None)
  
         return item

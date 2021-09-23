@@ -1,26 +1,18 @@
 import scrapy
-from scrapy.crawler import CrawlerProcess
 from datetime import datetime
 from decimal import Decimal
-from scrapy.utils.project import get_project_settings
 
 class ArticleSpider(scrapy.Spider):
-    name = "medium_basic"
+    name = "medium_spider_basic"
+    start_urls = ['https://medium.com/iearn/archive']
     custom_settings = {
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_DEBUG': True,
-        'DOWNLOAD_DELAY': 5,
-        'ROBOTSTXT_OBEY': False,
+        'DOWNLOAD_DELAY': 1,
+        'RANDOMIZE_DOWNLOAD_DELAY': True,
+        'ROBOTSTXT_OBEY': True,
         'DUPEFILTER_CLASS': 'scrapy.dupefilters.BaseDupeFilter',
     }
-    def start_requests(self):
-        urls = [
-            # 'https://towardsdatascience.com/archive'
-            #'https://medium.com/python-in-plain-english/archive',
-            'https://medium.com/iearn/archive',
-        ]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
         year_div = response.xpath("/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]")
@@ -30,6 +22,7 @@ class ArticleSpider(scrapy.Spider):
         else:
             yield from self.parse_articles(response)
     
+
     def parse_months(self, response):
         month_div = response.xpath("/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[3]")
         month_pages = month_div.xpath(".//a/@href").getall()
@@ -38,6 +31,7 @@ class ArticleSpider(scrapy.Spider):
         else:
             yield from self.parse_articles(response)
 
+
     def parse_days(self, response):
         day_div = response.xpath("/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[4]")        
         day_pages = day_div.xpath(".//a/@href").getall()
@@ -45,6 +39,7 @@ class ArticleSpider(scrapy.Spider):
             yield from response.follow_all(day_pages, callback=self.parse_articles)
         else:
             yield from self.parse_articles(response)
+    
     
     def parse_articles(self, response):
         articles = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[2]/*')
@@ -82,6 +77,8 @@ class ArticleSpider(scrapy.Spider):
                 month = date_object.month
                 published_date = datetime(year, month, day)
 
+                article_url = article.xpath('.//a[contains(@class, "button--smaller")]/@href').get().split('?')[0]
+
                 scraped_date = datetime.now()
 
                 yield {
@@ -93,6 +90,7 @@ class ArticleSpider(scrapy.Spider):
                     'claps': claps,
                     'responses': responses,
                     'published_date': published_date,
+                    'article_url' : article_url,
                     'scraped_date': scraped_date
                 }
 
