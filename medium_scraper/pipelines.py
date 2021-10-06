@@ -42,7 +42,6 @@ class SQLiteWriterPipeline(object):
 
     def process_item(self, item, spider):
         """
-        Save real estate index in the database
         This method is called for every item pipeline component
         """
         session = self.factory()
@@ -81,8 +80,10 @@ class CsvWriterPipeline(object):
         return pipeline
 
     def spider_opened(self, spider):
-        self.file = open('./medium_scraper/scraped_data/output2.csv', 'w+b')
+        self.file = open('./scraped_data/data_from_csvpipe.csv', 'w+b')
         self.exporter = CsvItemExporter(self.file)
+        # The line below is optional, but makes sure that the data is saved in a customized order
+        self.exporter.fields_to_export = ['author', 'title', 'subtitle_preview', 'collection', 'read_time', 'claps', 'responses', 'published_date', 'article_url', 'scraped_date']
         self.exporter.start_exporting()
 
     def spider_closed(self, spider):

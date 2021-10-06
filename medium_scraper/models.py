@@ -6,16 +6,13 @@ from scrapy.utils.project import get_project_settings
 Base = declarative_base()
 
 def db_connect():
-    """
-    ####Performs database connection using database settings from settings.py.
-    ####Returns sqlaclchemy engine instance.
-    """
+    # Connect the database using the settings from settings.py.
+    # Returns a sqlaclchemy engine instance.
     url = get_project_settings().get("CONNECTION_STRING")
     return create_engine(url)
 
 def create_table(engine):
     Base.metadata.create_all(engine, checkfirst=True)
-
 
 class MediumDbModel(Base):
     __tablename__ = "medium"

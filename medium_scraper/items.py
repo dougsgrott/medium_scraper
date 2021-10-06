@@ -4,9 +4,7 @@
 # https://docs.scrapy.org/en/latest/topics/items.html
 
 import scrapy
-
 from itemloaders.processors import MapCompose
-
 from datetime import datetime
 from decimal import Decimal
 
@@ -29,7 +27,8 @@ def getNumericResponse(text):
 
 
 def getNumericReadTime(text):
-    return text.split()[0]
+    if text != None:
+        return text.split()[0]
 
 def getPublishedDate(published_date):
     try:
@@ -45,7 +44,8 @@ def getPublishedDate(published_date):
 
 
 def getArticleUrl(raw_url):
-    return raw_url.split('?')[0]
+    if raw_url != None:
+        return raw_url.split('?')[0]
 
 
 class MediumScraperItem(scrapy.Item):
