@@ -3,7 +3,10 @@ from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst
 
 import sys
-sys.path.append("/home/user/PythonProj/medium_scraper/medium_scraper/")
+import os
+curr_path = os.path.dirname(os.path.realpath(__file__))
+base_path = os.path.abspath(os.path.join(curr_path, os.pardir))
+sys.path.append(base_path)
 from items import MediumScraperItem
 
 from datetime import datetime
@@ -11,7 +14,7 @@ from datetime import datetime
 
 class ArticleSpider(Spider):
     name = "spider_item"
-    start_urls = ['https://medium.com/hackernoon/archive']
+    start_urls = ['https://medium.com/bitgrit-data-science-publication/archive/'] # https://towardsdatascience.com/archive # https://medium.com/hackernoon/archive
     custom_settings = {
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_DEBUG': True,
@@ -67,3 +70,8 @@ class ArticleSpider(Spider):
 
         return item_loader.load_item()
 
+if __name__ == '__main__':
+    from scrapy.crawler import CrawlerProcess
+    process = CrawlerProcess()
+    process.crawl(ArticleSpider)
+    process.start()

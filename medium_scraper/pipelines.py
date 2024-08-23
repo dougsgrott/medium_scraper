@@ -8,7 +8,10 @@ from scrapy.exporters import CsvItemExporter
 
 from models import MediumDbModel, create_table, db_connect
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
 from scrapy.exceptions import DropItem
+import os
 
 
 class AvoidDuplicatesPipeline(object):
@@ -24,6 +27,7 @@ class AvoidDuplicatesPipeline(object):
     def process_item(self, item, spider):
         session = self.factory()
         exist_title = session.query(MediumDbModel).filter_by(title=item["title"]).first()
+        session.close()
         if (exist_title is not None):
             raise DropItem("Duplicate item found: {}".format(item["title"]))
         else:
@@ -80,7 +84,11 @@ class CsvWriterPipeline(object):
         return pipeline
 
     def spider_opened(self, spider):
-        self.file = open('./scraped_data/data_from_csvpipe.csv', 'w+b')
+        curr_path = os.path.dirname(os.path.realpath(__file__))
+        scraped_data_path = os.path.abspath(os.path.join(curr_path, 'scraped_data')) # os.pardir,
+        filename = 'data_from_csvpipe.csv'
+        write_path = os.path.join(scraped_data_path, filename)
+        self.file = open(write_path, 'w+b')
         self.exporter = CsvItemExporter(self.file)
         # The line below is optional, but makes sure that the data is saved in a customized order
         self.exporter.fields_to_export = ['author', 'title', 'subtitle_preview', 'collection', 'read_time', 'claps', 'responses', 'published_date', 'article_url', 'scraped_date']
@@ -107,5 +115,5 @@ class DefaultValuesPipeline(object):
         item.setdefault('published_date', None)
         item.setdefault('article_url', None)
         item.setdefault('scraped_date', None)
- 
+
         return item

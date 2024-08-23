@@ -2,6 +2,7 @@ from sqlalchemy import create_engine, Column
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Integer, String, DateTime
 from scrapy.utils.project import get_project_settings
+import os
 
 Base = declarative_base()
 
@@ -9,6 +10,7 @@ def db_connect():
     # Connect the database using the settings from settings.py.
     # Returns a sqlaclchemy engine instance.
     url = get_project_settings().get("CONNECTION_STRING")
+    os.makedirs('scraped_data', exist_ok=True)
     return create_engine(url)
 
 def create_table(engine):

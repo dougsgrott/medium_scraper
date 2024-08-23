@@ -6,14 +6,15 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+import os
 
 BOT_NAME = 'medium_scraper'
 
 SPIDER_MODULES = ['medium_scraper.spiders']
 NEWSPIDER_MODULE = 'medium_scraper.spiders'
 
-#CONNECTION_STRING = 'sqlite:////home/user/PythonProj/medium_scraper/medium_scraper/scraped_data/medium.db'
-CONNECTION_STRING = 'sqlite:///scraped_data/medium.db'
+file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+CONNECTION_STRING = 'sqlite:///' + os.path.join(file_path, os.path.join('scraped_data', 'medium.sqlite'))
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'medium_scraper (+http://www.yourdomain.com)'

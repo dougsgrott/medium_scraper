@@ -3,7 +3,10 @@ from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst
 
 import sys
-sys.path.append("/home/user/PythonProj/medium_scraper/medium_scraper/")
+import os
+curr_path = os.path.dirname(os.path.realpath(__file__))
+base_path = os.path.abspath(os.path.join(curr_path, os.pardir))
+sys.path.append(base_path)
 from items import MediumScraperItem
 
 from datetime import datetime
@@ -11,26 +14,31 @@ from datetime import datetime
 
 class ArticleSpider(Spider):
     name = "spider_sqlitepipe"
-    start_urls = ['https://medium.com/hackernoon/archive']
+    # start_urls = ['https://medium.com/hackernoon/archive']
+    # start_urls = ['https://medium.datadriveninvestor.com/archive']
+    # start_urls = ['https://betterprogramming.pub/archive']
+    # start_urls = ['https://towardsdatascience.com/archive']
+    # start_urls = ['https://medium.com/bitgrit-data-science-publication/archive/']
+    start_urls = ['https://medium.datadriveninvestor.com/archive'] # https://betterprogramming.pub/archive https://towardsdatascience.com/archive https://medium.com/bitgrit-data-science-publication/archive/ # https://medium.com/hackernoon/archive
+
     custom_settings = {
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_DEBUG': True,
-        'DOWNLOAD_DELAY': 1,
+        'DOWNLOAD_DELAY': 2,
         'ROBOTSTXT_OBEY': False,
         'ITEM_PIPELINES': {
-            'medium_scraper.pipelines.DefaultValuesPipeline': 100,
-            'medium_scraper.pipelines.AvoidDuplicatesPipeline':300,
-            'medium_scraper.pipelines.SQLiteWriterPipeline': 400,
+            'pipelines.DefaultValuesPipeline': 100,
+            'pipelines.AvoidDuplicatesPipeline':300,
+            'pipelines.SQLiteWriterPipeline': 400,
         },
     }
-    
+
     def parse(self, response):
         year_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]/*/a/@href').getall()
         if len(year_pages) != 0:
             yield from response.follow_all(year_pages, callback=self.parse_months)
         else:
             yield from self.parse_articles(response)
-    
 
     def parse_months(self, response):
         month_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[3]/div/a/@href').getall()
@@ -39,20 +47,17 @@ class ArticleSpider(Spider):
         else:
             yield from self.parse_articles(response)
 
-
     def parse_days(self, response):
         day_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[4]/div/a/@href').getall()
         if len(day_pages) != 0:
             yield from response.follow_all(day_pages, callback=self.parse_articles)
         else:
             yield from self.parse_articles(response)
-    
 
     def parse_articles(self, response):
         articles = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[2]/*')
         for article_selector in articles:
             yield self.populate_item(article_selector, response.url)
-
 
     def populate_item(self, selector, url):
         item_loader = ItemLoader(item=MediumScraperItem(), selector=selector)
@@ -68,6 +73,11 @@ class ArticleSpider(Spider):
         item_loader.add_xpath('published_date', './/time/text()')
         item_loader.add_xpath('article_url', './/a[contains(@class, "button--smaller")]/@href')
         item_loader.add_value('scraped_date', datetime.now())
-
         return item_loader.load_item()
 
+
+if __name__ == '__main__':
+    from scrapy.crawler import CrawlerProcess
+    process = CrawlerProcess()
+    process.crawl(ArticleSpider)
+    process.start()

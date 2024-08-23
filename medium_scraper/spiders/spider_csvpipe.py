@@ -3,7 +3,10 @@ from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst
 
 import sys
-sys.path.append("/home/user/PythonProj/medium_scraper/medium_scraper/")
+import os
+curr_path = os.path.dirname(os.path.realpath(__file__))
+base_path = os.path.abspath(os.path.join(curr_path, os.pardir))
+sys.path.append(base_path)
 from items import MediumScraperItem
 
 from datetime import datetime
@@ -11,15 +14,17 @@ from datetime import datetime
 
 class ArticleSpider(Spider):
     name = "spider_csvpipe"
-    start_urls = ['https://medium.com/hackernoon/archive']
+    start_urls = ['https://medium.datadriveninvestor.com/archive'] # https://betterprogramming.pub/archive https://towardsdatascience.com/archive https://medium.com/bitgrit-data-science-publication/archive/ # https://medium.com/hackernoon/archive
     custom_settings = {
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_DEBUG': True,
         'DOWNLOAD_DELAY': 1,
         'ROBOTSTXT_OBEY': False,
         'ITEM_PIPELINES': {
-            'medium_scraper.pipelines.DefaultValuesPipeline': 100,
-            'medium_scraper.pipelines.CsvWriterPipeline': 200,
+            'pipelines.DefaultValuesPipeline': 100,
+            'pipelines.CsvWriterPipeline': 200,
+            # 'medium_scraper.pipelines.DefaultValuesPipeline': 100,
+            # 'medium_scraper.pipelines.CsvWriterPipeline': 200,
         },
     }
     
@@ -69,3 +74,10 @@ class ArticleSpider(Spider):
         item_loader.add_value('scraped_date', datetime.now())
 
         return item_loader.load_item()
+
+
+if __name__ == '__main__':
+    from scrapy.crawler import CrawlerProcess
+    process = CrawlerProcess()
+    process.crawl(ArticleSpider)
+    process.start()
