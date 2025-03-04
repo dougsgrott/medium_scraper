@@ -1,6 +1,7 @@
 from scrapy.spiders import Spider
 from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst
+from datetime import datetime
 
 import sys
 import os
@@ -9,22 +10,13 @@ base_path = os.path.abspath(os.path.join(curr_path, os.pardir))
 sys.path.append(base_path)
 from items import MediumScraperItem
 
-from datetime import datetime
-
 
 class ArticleSpider(Spider):
     name = "spider_sqlitepipe"
-    # start_urls = ['https://medium.com/hackernoon/archive']
-    # start_urls = ['https://medium.datadriveninvestor.com/archive']
-    # start_urls = ['https://betterprogramming.pub/archive']
-    # start_urls = ['https://towardsdatascience.com/archive']
-    # start_urls = ['https://medium.com/bitgrit-data-science-publication/archive/']
-    start_urls = ['https://medium.datadriveninvestor.com/archive'] # https://betterprogramming.pub/archive https://towardsdatascience.com/archive https://medium.com/bitgrit-data-science-publication/archive/ # https://medium.com/hackernoon/archive
-
     custom_settings = {
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_DEBUG': True,
-        'DOWNLOAD_DELAY': 2,
+        'DOWNLOAD_DELAY': 5,
         'ROBOTSTXT_OBEY': False,
         'ITEM_PIPELINES': {
             'pipelines.DefaultValuesPipeline': 100,
@@ -32,6 +24,10 @@ class ArticleSpider(Spider):
             'pipelines.SQLiteWriterPipeline': 400,
         },
     }
+
+    def __init__(self, start_urls=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.start_urls = start_urls
 
     def parse(self, response):
         year_pages = response.xpath('/html/body/div[1]/div[2]/div/div[3]/div[1]/div[1]/div/div[2]/*/a/@href').getall()
@@ -79,5 +75,15 @@ class ArticleSpider(Spider):
 if __name__ == '__main__':
     from scrapy.crawler import CrawlerProcess
     process = CrawlerProcess()
-    process.crawl(ArticleSpider)
+    process.crawl(ArticleSpider, start_urls=["https://medium.com/bitgrit-data-science-publication/archive/"])
     process.start()
+
+    # Some options of Medium archives related to the IT field:
+    # https://medium.com/hackernoon/archive
+    # https://betterprogramming.pub/archive
+    # https://medium.com/towards-data-science/archive
+    # https://medium.com/bitgrit-data-science-publication/archive/
+    # https://medium.datadriveninvestor.com/archive']
+    # https://pub.towardsai.net/archive
+    # https://becominghuman.ai/archive
+    # https://medium.com/data-science-collective/archive
